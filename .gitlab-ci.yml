@@ -1,0 +1,52 @@
+stages:
+  - test
+  - deploy
+  - post-validation
+
+.before_venv:
+  before_script:
+    - python3 -m venv .venv
+    - . .venv/bin/activate
+    - pip3 install netmiko pylint
+
+lint:
+  stage: test
+  extends: .before_venv
+  script:
+    - pylint --fail-under=6 script.py validate.py
+  only:
+    - test
+    - main
+
+deploy_test:
+  stage: deploy
+  extends: .before_venv
+  script:
+    - python3 script.py test_inventory.yml
+  only:
+    - test
+
+post_validate_test:
+  stage: post-validation
+  extends: .before_venv
+  script:
+    - python3 validate.py test_inventory.yml
+  only:
+    - test
+
+deploy_prod:
+  stage: deploy
+  extends: .before_venv
+  script:
+    - python3 script.py prod_inventory.yml
+  only:
+    - main
+
+
+post_validate_prod:
+  stage: post-validation
+  extends: .before_venv
+  script:
+    - python3 validate.py prod_inventory.yml
+  only:
+    - main
